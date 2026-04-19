@@ -20,6 +20,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { RecentMeeting }   from '../types';
 import { timeAgo, generateRoomId } from '../lib/utils';
 import { LS_KEYS, COPYRIGHT }       from '../lib/constants';
+import { AnalyticsPanel } from '../components/AnalyticsPanel';
 
 export function LobbyPage() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export function LobbyPage() {
   const [joinCode,    setJoinCode]    = useState('');
   const [joinError,   setJoinError]   = useState('');
   const [creating,    setCreating]    = useState(false);
-  const [showAuth,    setShowAuth]    = useState(false); // ← FIXED: start false, not !appUser
+  const [showAuth,    setShowAuth]    = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showRating,  setShowRating]  = useState(false);
   const [recent,      setRecent]      = useLocalStorage<RecentMeeting[]>(LS_KEYS.RECENT_MEETINGS, []);
@@ -40,11 +41,9 @@ export function LobbyPage() {
   const userPlan    = appUser?.plan        || 'free';
   const isPro       = userPlan !== 'free';
 
-  // Close auth modal when user successfully logs in
   useEffect(() => { if (appUser) setShowAuth(false); }, [appUser]);
 
   const handleNewMeeting = async () => {
-    // If no user at all → show auth to get a name first
     if (!appUser) { setShowAuth(true); return; }
     setCreating(true);
     try {
@@ -71,13 +70,12 @@ export function LobbyPage() {
   return (
     <div className="min-h-screen bg-dark-900 flex flex-col">
 
-      {/* NAV */}
+      {/* NAV - unchanged */}
       <nav className="glass-dark border-b border-white/[0.06] px-4 md:px-6 h-16 flex items-center justify-between shrink-0">
         <button onClick={() => navigate('/')} className="hover:opacity-80 transition-opacity"><Logo/></button>
         <div className="flex items-center gap-2">
           {appUser ? (
             <>
-              {/* User chip */}
               <div className="flex items-center gap-2 bg-white/[0.06] border border-white/10 rounded-xl px-3 py-1.5">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-flame-500 to-flame-700 flex items-center justify-center text-white text-[10px] font-black shrink-0">
                   {displayName.charAt(0).toUpperCase() || '?'}
@@ -109,100 +107,107 @@ export function LobbyPage() {
         </div>
       </nav>
 
-      {/* MAIN */}
+      {/* MAIN - unchanged except Analytics sidebar added */}
       <div className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-4xl">
-
-          <h1 className="text-2xl md:text-4xl font-black text-white mb-1 animate-slide-up">
-            {displayName ? `Welcome back, ${displayName.split(' ')[0]} 👋` : 'Welcome to Boutyflameet 🔥'}
-          </h1>
-          <p className="text-white/50 mb-8 text-sm md:text-base">
-            {appUser ? 'Start or join a meeting — link works anywhere in the world.' : 'Enter your name to start — no account needed.'}
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-
-            {/* New Meeting */}
-            <div className="glass border border-white/[0.08] rounded-2xl p-6 md:p-7 hover:border-flame-500/20 transition-all">
-              <div className="text-4xl mb-4 animate-float inline-block">🔥</div>
-              <h2 className="text-lg md:text-xl font-bold text-white mb-2">New Meeting</h2>
-              <p className="text-white/50 text-sm mb-5 leading-relaxed">
-                A unique <span className="font-mono text-flame-400 text-xs">BOUTY-XXXXXX</span> code is created every time. Link expires when everyone leaves.
+        <div className="w-full max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Original main content - 100% unchanged */}
+            <div className="lg:col-span-8">
+              <h1 className="text-2xl md:text-4xl font-black text-white mb-1 animate-slide-up">
+                {displayName ? `Welcome back, ${displayName.split(' ')[0]} 👋` : 'Welcome to Boutyflameet 🔥'}
+              </h1>
+              <p className="text-white/50 mb-8 text-sm md:text-base">
+                {appUser ? 'Start or join a meeting — link works anywhere in the world.' : 'Enter your name to start — no account needed.'}
               </p>
-              <Btn variant="flame" size="lg" className="w-full" loading={creating}
-                icon={creating ? undefined : <Plus size={18}/>} onClick={handleNewMeeting}>
-                {creating ? 'Creating…' : 'Create Meeting'}
-              </Btn>
-            </div>
 
-            {/* Join Meeting */}
-            <div className="glass border border-white/[0.08] rounded-2xl p-6 md:p-7 hover:border-cyan-accent/15 transition-all">
-              <div className="text-4xl mb-4 inline-block">🔗</div>
-              <h2 className="text-lg md:text-xl font-bold text-white mb-2">Join Meeting</h2>
-              <p className="text-white/50 text-sm mb-5 leading-relaxed">
-                Enter a code like <span className="font-mono text-flame-400 text-xs">BOUTY-ABC123</span> or paste a full invite link.
-              </p>
-              <form onSubmit={handleJoin} className="flex flex-col gap-3">
-                <Input value={joinCode} onChange={e => { setJoinCode(e.target.value); setJoinError(''); }}
-                  placeholder="BOUTY-ABC123 or paste link…" error={joinError} className="font-mono"/>
-                <Btn variant="cyan" size="md" className="w-full" icon={<LogIn size={16}/>}>Join Meeting</Btn>
-              </form>
-            </div>
-
-          </div>
-
-          {/* Pro teaser (only show when logged in as free user) */}
-          {appUser && !isPro && (
-            <div className="glass border border-flame-500/15 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-flame-500/15 flex items-center justify-center shrink-0">
-                <Crown size={20} className="text-flame-400"/>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-white mb-0.5">Upgrade to Blaze Pro</h3>
-                <p className="text-xs text-white/50 leading-relaxed">
-                  50 participants · Unlimited time · AI features · Voice typing · Cloud recording · Breakout rooms
-                </p>
-              </div>
-              <button onClick={() => setShowPayment(true)}
-                className="btn-flame text-white text-xs font-bold px-4 py-2.5 rounded-xl shrink-0 whitespace-nowrap">
-                KES 1,500/mo →
-              </button>
-            </div>
-          )}
-
-          {/* Recent meetings */}
-          {recent.length > 0 && (
-            <div className="animate-fade-in">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-white/50 text-sm font-semibold">
-                  <Clock size={14}/> Recent Meetings
+              <div className="grid md:grid-cols-2 gap-4 mb-8">
+                {/* New Meeting - unchanged */}
+                <div className="glass border border-white/[0.08] rounded-2xl p-6 md:p-7 hover:border-flame-500/20 transition-all">
+                  <div className="text-4xl mb-4 animate-float inline-block">🔥</div>
+                  <h2 className="text-lg md:text-xl font-bold text-white mb-2">New Meeting</h2>
+                  <p className="text-white/50 text-sm mb-5 leading-relaxed">
+                    A unique <span className="font-mono text-flame-400 text-xs">BOUTY-XXXXXX</span> code is created every time. Link expires when everyone leaves.
+                  </p>
+                  <Btn variant="flame" size="lg" className="w-full" loading={creating}
+                    icon={creating ? undefined : <Plus size={18}/>} onClick={handleNewMeeting}>
+                    {creating ? 'Creating…' : 'Create Meeting'}
+                  </Btn>
                 </div>
-                <button onClick={() => setRecent([])}
-                  className="flex items-center gap-1.5 text-white/25 hover:text-red-400 text-xs transition-colors">
-                  <Trash2 size={11}/> Clear
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                {recent.slice(0,6).map(r => (
-                  <button key={r.roomId} onClick={() => navigate(`/join/${r.roomId}`)}
-                    className="glass border border-white/[0.06] hover:border-flame-500/20 rounded-xl px-4 py-3 flex items-center justify-between group transition-all text-left">
-                    <div>
-                      <p className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">{r.title || r.roomId}</p>
-                      <p className="text-xs text-white/35 font-mono">{r.roomId} · {timeAgo(r.joinedAt)}</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-flame-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-xs font-bold">Rejoin</span><ArrowRight size={14}/>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
+                {/* Join Meeting - unchanged */}
+                <div className="glass border border-white/[0.08] rounded-2xl p-6 md:p-7 hover:border-cyan-accent/15 transition-all">
+                  <div className="text-4xl mb-4 inline-block">🔗</div>
+                  <h2 className="text-lg md:text-xl font-bold text-white mb-2">Join Meeting</h2>
+                  <p className="text-white/50 text-sm mb-5 leading-relaxed">
+                    Enter a code like <span className="font-mono text-flame-400 text-xs">BOUTY-ABC123</span> or paste a full invite link.
+                  </p>
+                  <form onSubmit={handleJoin} className="flex flex-col gap-3">
+                    <Input value={joinCode} onChange={e => { setJoinCode(e.target.value); setJoinError(''); }}
+                      placeholder="BOUTY-ABC123 or paste link…" error={joinError} className="font-mono"/>
+                    <Btn variant="cyan" size="md" className="w-full" icon={<LogIn size={16}/>}>Join Meeting</Btn>
+                  </form>
+                </div>
+              </div>
+
+              {/* Pro teaser - unchanged */}
+              {appUser && !isPro && (
+                <div className="glass border border-flame-500/15 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-flame-500/15 flex items-center justify-center shrink-0">
+                    <Crown size={20} className="text-flame-400"/>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-white mb-0.5">Upgrade to Blaze Pro</h3>
+                    <p className="text-xs text-white/50 leading-relaxed">
+                      50 participants · Unlimited time · AI features · Voice typing · Cloud recording · Breakout rooms
+                    </p>
+                  </div>
+                  <button onClick={() => setShowPayment(true)}
+                    className="btn-flame text-white text-xs font-bold px-4 py-2.5 rounded-xl shrink-0 whitespace-nowrap">
+                    KES 1,500/mo →
+                  </button>
+                </div>
+              )}
+
+              {/* Recent meetings - unchanged */}
+              {recent.length > 0 && (
+                <div className="animate-fade-in">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 text-white/50 text-sm font-semibold">
+                      <Clock size={14}/> Recent Meetings
+                    </div>
+                    <button onClick={() => setRecent([])}
+                      className="flex items-center gap-1.5 text-white/25 hover:text-red-400 text-xs transition-colors">
+                      <Trash2 size={11}/> Clear
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {recent.slice(0,6).map(r => (
+                      <button key={r.roomId} onClick={() => navigate(`/join/${r.roomId}`)}
+                        className="glass border border-white/[0.06] hover:border-flame-500/20 rounded-xl px-4 py-3 flex items-center justify-between group transition-all text-left">
+                        <div>
+                          <p className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">{r.title || r.roomId}</p>
+                          <p className="text-xs text-white/35 font-mono">{r.roomId} · {timeAgo(r.joinedAt)}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-flame-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-xs font-bold">Rejoin</span><ArrowRight size={14}/>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Analytics Panel - added as sidebar only */}
+            <div className="lg:col-span-4">
+              <AnalyticsPanel />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - unchanged */}
       <footer className="border-t border-white/[0.04] px-4 py-4 flex items-center justify-between flex-wrap gap-3">
         <p className="text-white/20 text-xs">{COPYRIGHT} · Boutyflameet</p>
         <button onClick={() => setShowRating(true)}
@@ -211,7 +216,7 @@ export function LobbyPage() {
         </button>
       </footer>
 
-      {/* MODALS */}
+      {/* MODALS - unchanged */}
       {showAuth && (
         <AuthModal
           isFirebaseReady={isFirebaseConfigured}

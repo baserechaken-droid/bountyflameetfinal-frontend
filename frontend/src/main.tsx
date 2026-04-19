@@ -13,7 +13,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
-      {/* Vercel Analytics — tracks page views and visitors automatically */}
       <Analytics />
     </BrowserRouter>
   </React.StrictMode>
