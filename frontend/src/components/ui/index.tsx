@@ -64,7 +64,7 @@ export function VideoTile({
   const actualSSing     = isScreenSharing ?? peer?.isScreenSharing ?? false;
   const actualId        = socketId ?? peer?.socketId ?? '';
   const connState       = peer?.connectionState;
-  const isConnecting    = connState === 'new' || connState === 'connecting' || connState === 'checking';
+  const isConnecting    = connState === 'new' || connState === 'connecting' ;
   const isFailed        = connState === 'failed'; // only truly failed, not transient disconnect
 
   useEffect(() => {
