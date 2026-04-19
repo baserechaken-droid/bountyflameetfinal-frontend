@@ -144,7 +144,7 @@ export function MeetingPage() {
     setTimeout(() => setShowConnecting(false), 5000);
   }, []);
 
-  // FIXED: Prevent duplicate chat messages (internal only)
+  // FIXED: Prevent duplicate chat messages
   useEffect(() => {
     if (!socket) return;
     const onChat = (msg: ChatMessage) => {
@@ -154,7 +154,7 @@ export function MeetingPage() {
     return () => socket.off('chat-message', onChat);
   }, [socket, mySocketId, setMessages]);
 
-  // FIXED: Screen sharing visible to all participants (internal only)
+  // FIXED: Screen sharing visible to all
   const handleToggleScreen = useCallback(async () => {
     if (screenSharing) {
       stopScreenShare();
