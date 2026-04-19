@@ -65,39 +65,39 @@ export function VideoTile({
   const actualId        = socketId ?? peer?.socketId ?? '';
   const connState       = peer?.connectionState;
   const isConnecting    = connState === 'new' || connState === 'connecting' ;
-  const isFailed        = connState === 'failed'; // only truly failed, not transient disconnect
+  const isFailed        = connState === 'failed';
 
+  const lastStreamRef = useRef<MediaStream | null>(null);
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
     if (actualStream) {
-      // Always re-attach: on mobile the same stream object may have new tracks
-      vid.srcObject = actualStream;
-      const tryPlay = () => {
-        vid.play().catch(err => {
-          // Autoplay blocked: wait for user interaction
-          if (err?.name === 'NotAllowedError') {
-            const resume = () => { vid.play().catch(() => {}); };
-            document.addEventListener('click', resume, { once: true });
-            document.addEventListener('touchstart', resume, { once: true });
-          }
-        });
-      };
-      if (vid.readyState >= 1) {
-        tryPlay();
-      } else {
-        vid.onloadedmetadata = tryPlay;
+      // Re-attach whenever stream changes OR when it's new tracks on same object
+      if (lastStreamRef.current !== actualStream || vid.paused) {
+        lastStreamRef.current = actualStream;
+        vid.srcObject = actualStream;
+        const tryPlay = () => {
+          vid.play().catch(err => {
+            if (err?.name === 'NotAllowedError') {
+              const resume = () => { vid.play().catch(() => {}); };
+              document.addEventListener('click',      resume, { once: true });
+              document.addEventListener('touchstart', resume, { once: true, passive: true });
+            }
+          });
+        };
+        if (vid.readyState >= 1) { tryPlay(); }
+        else { vid.onloadedmetadata = tryPlay; }
       }
     } else {
       vid.srcObject = null;
+      lastStreamRef.current = null;
     }
   }, [actualStream]);
 
   const initials  = getInitials(name);
   const gradient  = getPeerColor(isSelf ? 'self' : actualId);
-  const hasVideo  = !!actualStream &&
-                    actualStream.active &&
-                    actualStream.getVideoTracks().some(t => t.enabled && t.readyState === 'live') &&
+  const hasVideo  = !!actualStream && actualStream.active &&
+                    actualStream.getVideoTracks().some(t => t.enabled && t.readyState !== 'ended') &&
                     !actualVideoOff;
 
   const initialsSize = {

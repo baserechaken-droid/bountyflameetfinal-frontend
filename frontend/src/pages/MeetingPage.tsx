@@ -157,10 +157,11 @@ export function MeetingPage() {
     toggleMic, toggleCamera, startScreenShare, stopScreenShare, initLocalStream,
   } = useWebRTC({
     socket,
-    roomId:      roomId ?? null,
+    roomId:          roomId ?? null,
     userName,
     userUid,
-    addToast,                         // ← FIXED: now passed so camera errors surface
+    externalStream:  preCapturedStream.current,  // ← KEY FIX: inject pre-captured stream
+    addToast,
     onPeerJoined: name => addToast(`🔥 ${name} joined`, 'success'),
     onPeerLeft:   name => addToast(`👋 ${name} left`,   'info'),
   });

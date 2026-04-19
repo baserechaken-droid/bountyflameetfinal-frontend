@@ -2,30 +2,46 @@
 export const COPYRIGHT     = '© Ken Baserecha';
 export const OWNER         = 'Ken Baserecha';
 export const APP_NAME      = 'Boutyflameet';
-export const SUPPORT_EMAIL = 'support@boutyflameet.app'; // set your real email here
+export const SUPPORT_EMAIL = 'support@boutyflameet.app';
 
+/**
+ * ICE Servers — STUN + TURN for NAT traversal
+ * STUN: helps find public IP (free, no relay)
+ * TURN: relays media when direct P2P fails (behind strict NAT/firewall)
+ * 
+ * Multiple STUN servers for redundancy.
+ * TURN servers (openrelay) — free up to 500MB/month.
+ * For production with heavy usage, get dedicated TURN from metered.ca or coturn.
+ */
 export const ICE_SERVERS: RTCIceServer[] = [
+  // Google STUN (highly reliable)
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun3.l.google.com:19302' },
+  // Cloudflare STUN
   { urls: 'stun:stun.cloudflare.com:3478' },
-  { urls: 'turn:openrelay.metered.ca:80',              username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443',             username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  // OpenRelay TURN — free, works across all NAT types
+  { urls: 'turn:openrelay.metered.ca:80',               username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp',username: 'openrelayproject', credential: 'openrelayproject' },
+  // Twilio STUN (additional fallback)
+  { urls: 'stun:global.stun.twilio.com:3478' },
 ];
 
 export const RTC_CONFIG: RTCConfiguration = {
-  iceServers: ICE_SERVERS,
+  iceServers:          ICE_SERVERS,
   iceCandidatePoolSize: 10,
-  bundlePolicy: 'max-bundle',
-  rtcpMuxPolicy: 'require',
+  bundlePolicy:        'max-bundle',
+  rtcpMuxPolicy:       'require',
+  // iceTransportPolicy: 'all' — allows both STUN and TURN (default)
 };
 
 export const SIGNALING_URL =
   import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3001';
 
-export const ROOM_PREFIX      = 'BOUTY';
-export const MAX_PEERS        = 12;
+export const ROOM_PREFIX       = 'BOUTY';
+export const MAX_PEERS         = 12;
 export const ALLOWED_REACTIONS = ['👍','❤️','🔥','😂','👏','🎉','🚀','💯'];
 
 export const LS_KEYS = {

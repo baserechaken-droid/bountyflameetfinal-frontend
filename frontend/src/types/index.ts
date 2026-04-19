@@ -55,7 +55,7 @@ export interface RoomJoinedPayload {
 }
 export interface UserJoinedPayload   { socketId: string; name: string; uid?: string; }
 export interface UserLeftPayload     { socketId: string; }
-export interface OfferPayload        { from: string; sdp: RTCSessionDescriptionInit; }
+export interface OfferPayload        { from: string; sdp: RTCSessionDescriptionInit; name?: string; }
 export interface AnswerPayload       { from: string; sdp: RTCSessionDescriptionInit; }
 export interface IceCandidatePayload { from: string; candidate: RTCIceCandidateInit; }
 export interface PeerMuteStatePayload{ socketId: string; micMuted: boolean; videoMuted: boolean; }
