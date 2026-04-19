@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { background: #07071A; color: #F0F0FF; margin: 0; overflow-x: hidden; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
+  ::-webkit-scrollbar-thumb { background: #FF4500; border-radius: 2px; }
+  video { object-fit: cover; }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(13,13,38,0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .glass-dark {
+    background: rgba(7,7,26,0.9);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, #FF4500, #FF8C35, #FFB347, #00F0FF);
+    background-size: 250%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradShift 5s ease infinite;
+  }
+  .btn-flame {
+    background: linear-gradient(135deg, #FF4500, #FF6B35);
+    box-shadow: 0 0 24px rgba(255,69,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-flame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-flame:hover::after { opacity: 1; }
+  .btn-flame:hover { box-shadow: 0 0 40px rgba(255,69,0,0.55), 0 8px 24px rgba(0,0,0,0.35); transform: translateY(-1px); }
+  .btn-flame:active { transform: translateY(0); }
+  .tile-speaking { animation: speaking 1.5s ease-in-out infinite; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+}
+
+@keyframes gradShift {
+  0%,100% { background-position: 0% }
+  50%      { background-position: 100% }
+}
+@keyframes speaking {
+  0%,100% { box-shadow: 0 0 0 2px #FF4500, 0 0 20px rgba(255,69,0,0.3); }
+  50%     { box-shadow: 0 0 0 3px #FF6B35, 0 0 40px rgba(255,107,53,0.6); }
+}

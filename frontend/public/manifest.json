@@ -1,0 +1,14 @@
+{
+  "name": "Boutyflameet",
+  "short_name": "Boutyflameet",
+  "description": "Premium video conferencing — Flame your connections",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07071A",
+  "theme_color": "#FF4500",
+  "orientation": "any",
+  "icons": [
+    { "src": "/logo.jpeg", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "/logo.jpeg", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}
