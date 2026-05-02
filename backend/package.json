@@ -1,0 +1,25 @@
+{
+  "name": "boutyflameet-backend",
+  "version": "4.1.0",
+  "description": "Boutyflameet signaling server — © Ken Baserecha",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "nodemon server.js"
+  },
+  "dependencies": {
+    "cors":           "^2.8.5",
+    "express":        "^4.18.2",
+    "socket.io":      "^4.7.2",
+    "firebase-admin": "^12.0.0"
+  },
+  "optionalDependencies": {
+    "@google-cloud/storage": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

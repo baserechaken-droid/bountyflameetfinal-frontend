@@ -1,0 +1,27 @@
+{
+{
+  "name": "Bountyflameet",
+  "short_name": "Bountyflameet",
+  "description": "Premium video conferencing — Flame your connections",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07071A",
+  "theme_color": "#FF4500",
+  "orientation": "portrait",
+  "categories": ["business", "communication", "video"],
+  "icons": [
+    {
+      "src": "/logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
