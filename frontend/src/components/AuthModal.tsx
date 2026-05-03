@@ -54,7 +54,6 @@ export function AuthModal({
     setResetSent(false);
   };
 
-  // Name-only submit
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const n = name.trim();
@@ -63,7 +62,6 @@ export function AuthModal({
     onNameLogin(n);
   };
 
-  // Email sign-in / register / reset
   const handleSubmit = async () => {
     if (loading || googleLoading) return;
     setLoading(true);
@@ -89,19 +87,24 @@ export function AuthModal({
     if (e.key === 'Enter') handleSubmit();
   };
 
-  // ─── FIXED GOOGLE HANDLER ─────────────────────────────────
-  // No state updates before calling onGoogle() – preserves user gesture.
-  // Loading state and error clearing happen after the popup is opened.
+  // ─── CRITICAL FIX ─────────────────────────────────────────
+  // Popup must open in the SAME synchronous execution as the click.
+  // Any await or state update before the popup breaks it.
+  // Solution: Call onGoogle() first, then update UI after.
   const handleGoogle = () => {
     if (loading || googleLoading) return;
-    // Do NOT call clearError() or setGoogleLoading(true) here.
-    onGoogle().finally(() => {
-      setGoogleLoading(false);
-      // Clear any leftover error after the attempt completes
-      clearError();
-    });
-    // Start loading indicator immediately (after the popup call – safe)
+    
+    // CRITICAL: Call onGoogle() IMMEDIATELY - no other code before this
+    // The popup will open synchronously from this call
+    const promise = onGoogle();
+    
+    // Now update UI (popup is already opening)
     setGoogleLoading(true);
+    clearError();
+    
+    promise.finally(() => {
+      setGoogleLoading(false);
+    });
   };
 
   const inputCls = 'w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-flame-500/60 focus:ring-2 focus:ring-flame-500/20 transition-all';
@@ -109,7 +112,6 @@ export function AuthModal({
 
   return (
     <div className="fixed inset-0 z-[500] flex items-center justify-center bg-dark-900 px-4 overflow-y-auto py-6">
-      {/* Background glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/4 w-80 h-80 rounded-full bg-flame-500/8 blur-3xl"/>
         <div className="absolute bottom-1/3 right-1/4 w-72 h-72 rounded-full bg-cyan-accent/5 blur-3xl"/>
@@ -125,7 +127,6 @@ export function AuthModal({
           </button>
         )}
 
-        {/* Logo */}
         <div className="flex flex-col items-center mb-6">
           <img src={logoSrc} alt="Boutyflameet"
             className="w-20 h-20 rounded-full object-cover shadow-flame animate-flame-pulse mb-3"
@@ -137,7 +138,7 @@ export function AuthModal({
 
         <div className="glass border border-white/10 rounded-2xl overflow-hidden">
 
-          {/* ── NAME-ONLY MODE ─────────────────────────────── */}
+          {/* NAME-ONLY MODE */}
           {mode === 'name' && (
             <div className="p-7">
               <h2 className="text-lg font-bold text-white mb-1">What's your name?</h2>
@@ -180,7 +181,7 @@ export function AuthModal({
             </div>
           )}
 
-          {/* ── FIREBASE AUTH MODES ────────────────────────── */}
+          {/* FIREBASE AUTH MODES */}
           {(mode === 'login' || mode === 'register' || mode === 'reset') && (
             <div className="p-7">
               <h2 className="text-lg font-bold text-white mb-5 text-center">
@@ -205,7 +206,6 @@ export function AuthModal({
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  {/* Name field (register only) */}
                   {mode === 'register' && (
                     <div className="relative">
                       <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30"/>
@@ -219,7 +219,6 @@ export function AuthModal({
                     </div>
                   )}
 
-                  {/* Email */}
                   <div className="relative">
                     <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30"/>
                     <input
@@ -234,7 +233,6 @@ export function AuthModal({
                     />
                   </div>
 
-                  {/* Password */}
                   {mode !== 'reset' && (
                     <div className="relative">
                       <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30"/>
@@ -257,14 +255,12 @@ export function AuthModal({
                     </div>
                   )}
 
-                  {/* Error message */}
                   {error && (
                     <div className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5 leading-relaxed">
                       {error}
                     </div>
                   )}
 
-                  {/* Forgot password link */}
                   {mode === 'login' && (
                     <button
                       type="button"
@@ -275,7 +271,6 @@ export function AuthModal({
                     </button>
                   )}
 
-                  {/* Primary action button */}
                   <button
                     type="button"
                     onClick={handleSubmit}
@@ -288,7 +283,6 @@ export function AuthModal({
                     :                       'Send Reset Email'}
                   </button>
 
-                  {/* Google sign-in */}
                   {mode !== 'reset' && (
                     <>
                       <div className="flex items-center gap-3 my-1">
@@ -318,7 +312,6 @@ export function AuthModal({
                     </>
                   )}
 
-                  {/* Mode switch links */}
                   <div className="text-center text-xs text-white/40 mt-1">
                     {mode === 'login' ? (
                       <>
