@@ -91,16 +91,15 @@ export function AuthModal({
   };
 
   // Google sign-in
-  const handleGoogle = async () => {
+  // CRITICAL: Do NOT setGoogleLoading or clearError before calling onGoogle().
+  // Any state update before the popup call causes a React re-render which
+  // breaks the browser user-gesture chain — the popup is then blocked silently.
+  // Solution: call onGoogle() first, handle state in .finally()
+  const handleGoogle = () => {
     if (loading || googleLoading) return;
-    setGoogleLoading(true);
     clearError();
-    try {
-      await onGoogle();
-      // onAuthStateChanged in useAuth will update user → LobbyPage closes modal
-    } finally {
-      setGoogleLoading(false);
-    }
+    setGoogleLoading(true);
+    onGoogle().finally(() => setGoogleLoading(false));
   };
 
   const inputCls = 'w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-flame-500/60 focus:ring-2 focus:ring-flame-500/20 transition-all';

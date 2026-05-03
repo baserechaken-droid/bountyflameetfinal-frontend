@@ -227,10 +227,14 @@ export function useAuth() {
     provider.addScope('email');
     provider.addScope('profile');
 
-    // Mobile: use redirect (popups are blocked on mobile browsers)
+    // CRITICAL: signInWithPopup MUST be called synchronously from the
+    // user gesture (button click). Any await before this call breaks
+    // the browser gesture chain and the popup is silently blocked.
+    //
+    // On mobile we use redirect instead — popups are always blocked there.
     if (isMobile()) {
       try {
-        console.log('[Auth] Mobile detected — using redirect for Google sign-in');
+        console.log('[Auth] Mobile — using redirect');
         await signInWithRedirect(auth!, provider);
         return true;
       } catch (e: any) {
@@ -240,22 +244,22 @@ export function useAuth() {
       }
     }
 
-    // Desktop: popup first, redirect as fallback
+    // Desktop: call popup immediately (no awaits before this line)
     try {
-      console.log('[Auth] Opening Google sign-in popup…');
+      console.log('[Auth] Opening Google popup…');
       const result = await signInWithPopup(auth!, provider);
-      console.log('[Auth] ✅ Google popup success:', result.user.email);
+      console.log('[Auth] ✅ Google success:', result.user.email);
       return true;
     } catch (e: any) {
-      console.error('[Auth] Google popup error:', e.code, e.message);
+      console.error('[Auth] Google error:', e.code);
 
-      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-        // User dismissed — no error message needed
-        return false;
+      if (e.code === 'auth/popup-closed-by-user' ||
+          e.code === 'auth/cancelled-popup-request') {
+        return false; // user dismissed — no error shown
       }
 
       if (e.code === 'auth/popup-blocked') {
-        console.log('[Auth] Popup blocked — trying redirect…');
+        // Popup blocked — fall back to redirect
         try {
           await signInWithRedirect(auth!, provider);
           return true;

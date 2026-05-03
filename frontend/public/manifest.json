@@ -1,7 +1,6 @@
 {
-{
-  "name": "Bountyflameet",
-  "short_name": "Bountyflameet",
+  "name": "Boutyflameet",
+  "short_name": "Boutyflameet",
   "description": "Premium video conferencing — Flame your connections",
   "start_url": "/?source=pwa",
   "scope": "/",
