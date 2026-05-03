@@ -41,7 +41,6 @@ function isMobile(): boolean {
   return /Android|WebOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-// Build Firestore user from Firebase user object
 async function buildUser(fbUser: any): Promise<User> {
   if (!db) {
     return checkAndDowngrade({
@@ -54,44 +53,42 @@ async function buildUser(fbUser: any): Promise<User> {
     });
   }
   try {
-    const ref  = doc(db, 'users', fbUser.uid);
+    const ref = doc(db, 'users', fbUser.uid);
     const snap = await getDoc(ref);
     if (snap.exists()) {
-      const data     = snap.data() as User;
+      const data = snap.data() as User;
       const userData = checkAndDowngrade(data);
-      // Write back if plan was downgraded
       if (userData.plan !== data.plan) {
         await updateDoc(ref, { plan: 'free', expiresAt: null }).catch(() => {});
       }
       return userData;
     }
-    // New user — create document
     const newUser: User = {
-      uid:         fbUser.uid,
-      email:       fbUser.email,
+      uid: fbUser.uid,
+      email: fbUser.email,
       displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
-      photoURL:    fbUser.photoURL,
-      plan:        'free',
-      createdAt:   Date.now(),
+      photoURL: fbUser.photoURL,
+      plan: 'free',
+      createdAt: Date.now(),
     };
     await setDoc(ref, { ...newUser, createdAt: serverTimestamp() });
     return newUser;
   } catch {
     return checkAndDowngrade({
-      uid:         fbUser.uid,
-      email:       fbUser.email,
+      uid: fbUser.uid,
+      email: fbUser.email,
       displayName: fbUser.displayName || 'User',
-      photoURL:    fbUser.photoURL,
-      plan:        'free',
-      createdAt:   Date.now(),
+      photoURL: fbUser.photoURL,
+      plan: 'free',
+      createdAt: Date.now(),
     });
   }
 }
 
 export function useAuth() {
-  const [user,    setUser]    = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const authHandledRef = useRef(false);
 
   const loadLocalUser = useCallback((): User | null => {
@@ -159,12 +156,12 @@ export function useAuth() {
     if (!name.trim()) return;
     const token = setGuestToken(name.trim());
     const u: User = {
-      uid:         `local_${token}`,
-      email:       null,
+      uid: `local_${token}`,
+      email: null,
       displayName: name.trim(),
-      photoURL:    null,
-      plan:        'free',
-      createdAt:   Date.now(),
+      photoURL: null,
+      plan: 'free',
+      createdAt: Date.now(),
     };
     saveLocalUser(u);
     setUser(u);
@@ -205,11 +202,12 @@ export function useAuth() {
     }
   }, []);
 
-  // ─── FIXED GOOGLE SIGN-IN ─────────────────────────────────
-  // No state updates (setError) before signInWithPopup.
-  // Error will be set after the popup attempt (inside catch).
+  // FIXED: This actually opens the Google popup
   const signInGoogle = useCallback(async (): Promise<boolean> => {
+    console.log('[Auth] 🔵 signInGoogle CALLED - starting Google sign-in');
+    
     if (!isFirebaseConfigured || !auth) {
+      console.error('[Auth] Firebase not configured');
       setError('Firebase not configured — use the name-only option below');
       return false;
     }
@@ -231,7 +229,7 @@ export function useAuth() {
       }
     }
 
-    // Desktop: call popup immediately – NO setError BEFORE this.
+    // Desktop: Open popup immediately
     try {
       console.log('[Auth] Opening Google popup…');
       const result = await signInWithPopup(auth!, provider);
@@ -240,13 +238,11 @@ export function useAuth() {
     } catch (e: any) {
       console.error('[Auth] Google error:', e.code);
 
-      if (e.code === 'auth/popup-closed-by-user' ||
-          e.code === 'auth/cancelled-popup-request') {
-        return false; // user dismissed – no error shown
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        return false;
       }
 
       if (e.code === 'auth/popup-blocked') {
-        // Fallback to redirect
         try {
           await signInWithRedirect(auth!, provider);
           return true;
@@ -286,7 +282,7 @@ export function useAuth() {
 
   const upgradePlan = useCallback((plan: 'pro' | 'enterprise', expiresAt?: number) => {
     const daysMap = { pro: 30, enterprise: 365 };
-    const expiry  = expiresAt ?? Date.now() + daysMap[plan] * 86400000;
+    const expiry = expiresAt ?? Date.now() + daysMap[plan] * 86400000;
     setUser(prev => {
       if (!prev) return null;
       const updated = { ...prev, plan, expiresAt: expiry };
@@ -310,18 +306,18 @@ export function useAuth() {
 
 function friendlyError(code: string): string {
   const map: Record<string, string> = {
-    'auth/user-not-found':         'No account found with this email. Create one below.',
-    'auth/wrong-password':         'Incorrect password. Try again or reset it below.',
-    'auth/email-already-in-use':   'This email is already registered — sign in instead.',
-    'auth/weak-password':          'Password must be at least 6 characters.',
-    'auth/invalid-email':          'Please enter a valid email address.',
-    'auth/too-many-requests':      'Too many failed attempts. Wait a few minutes and try again.',
+    'auth/user-not-found': 'No account found with this email. Create one below.',
+    'auth/wrong-password': 'Incorrect password. Try again or reset it below.',
+    'auth/email-already-in-use': 'This email is already registered — sign in instead.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/too-many-requests': 'Too many failed attempts. Wait a few minutes and try again.',
     'auth/network-request-failed': 'Network error — check your internet connection.',
-    'auth/invalid-credential':     'Incorrect email or password. Check and try again.',
-    'auth/popup-blocked':          'Popup blocked — trying redirect method instead…',
-    'auth/unauthorized-domain':    `This domain is not authorized. Go to Firebase Console → Authentication → Settings → Authorized domains and add: ${window.location.hostname}`,
-    'auth/operation-not-allowed':  'Google sign-in is not enabled. Enable it in Firebase Console → Authentication → Sign-in method → Google.',
-    'auth/internal-error':         'An unexpected error occurred. Please try again.',
+    'auth/invalid-credential': 'Incorrect email or password. Check and try again.',
+    'auth/popup-blocked': 'Popup blocked — trying redirect method instead…',
+    'auth/unauthorized-domain': `This domain is not authorized. Go to Firebase Console → Authentication → Settings → Authorized domains and add: ${window.location.hostname}`,
+    'auth/operation-not-allowed': 'Google sign-in is not enabled. Enable it in Firebase Console → Authentication → Sign-in method → Google.',
+    'auth/internal-error': 'An unexpected error occurred. Please try again.',
   };
   return map[code] || `Sign-in failed (${code}). Please try again.`;
 }
