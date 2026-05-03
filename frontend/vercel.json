@@ -1,15 +1,23 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/manifest.json",  "destination": "/manifest.json" },
+    { "source": "/logo.jpeg",      "destination": "/logo.jpeg" },
+    { "source": "/flame.svg",      "destination": "/flame.svg" },
+    { "source": "/favicon.ico",    "destination": "/favicon.ico" },
+    { "source": "/robots.txt",     "destination": "/robots.txt" },
+    { "source": "/(.*)",           "destination": "/index.html" }
+  ],
   "headers": [
     {
-      "source": "/(manifest.json|logo.jpeg|favicon.ico|robots.txt)",
+      "source": "/manifest.json",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" }
+        { "key": "Content-Type",    "value": "application/manifest+json" },
+        { "key": "Cache-Control",   "value": "public, max-age=3600" },
+        { "key": "X-Frame-Options", "value": "DENY" }
       ]
     },
     {
-      "source": "/static/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
