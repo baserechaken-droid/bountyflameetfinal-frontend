@@ -38,7 +38,7 @@ function checkAndDowngrade(u: User): User {
 }
 
 function isMobile(): boolean {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  return /Android|WebOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
 // Build Firestore user from Firebase user object
@@ -92,7 +92,6 @@ export function useAuth() {
   const [user,    setUser]    = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
-  // Prevent double-loading when both redirect result and onAuthStateChanged fire
   const authHandledRef = useRef(false);
 
   const loadLocalUser = useCallback((): User | null => {
@@ -117,9 +116,6 @@ export function useAuth() {
       return;
     }
 
-    // Step 1: Check for pending Google redirect result first
-    // This must complete before we set up onAuthStateChanged so we
-    // don't double-fire user setup.
     let unsubscribe: (() => void) | null = null;
 
     getRedirectResult(auth!)
@@ -138,14 +134,12 @@ export function useAuth() {
         }
       })
       .finally(() => {
-        // Step 2: Set up persistent auth state listener
         unsubscribe = onAuthStateChanged(auth!, async fbUser => {
           if (authHandledRef.current && fbUser) {
-            // Already handled by redirect result above — skip but keep loading false
             setLoading(false);
             return;
           }
-          authHandledRef.current = false; // reset for next sign-in
+          authHandledRef.current = false;
           if (fbUser) {
             const userData = await buildUser(fbUser);
             setUser(userData);
@@ -161,7 +155,6 @@ export function useAuth() {
     };
   }, [loadLocalUser]);
 
-  // ── Name-only login ───────────────────────────────────────
   const loginWithName = useCallback((name: string) => {
     if (!name.trim()) return;
     const token = setGuestToken(name.trim());
@@ -177,7 +170,6 @@ export function useAuth() {
     setUser(u);
   }, [saveLocalUser]);
 
-  // ── Email sign-in ─────────────────────────────────────────
   const signInEmail = useCallback(async (email: string, password: string): Promise<boolean> => {
     if (!isFirebaseConfigured || !auth) {
       setError('Firebase not configured — use the name-only option below');
@@ -195,7 +187,6 @@ export function useAuth() {
     }
   }, []);
 
-  // ── Email register ────────────────────────────────────────
   const registerEmail = useCallback(async (name: string, email: string, password: string): Promise<boolean> => {
     if (!isFirebaseConfigured || !auth) {
       setError('Firebase not configured — use the name-only option below');
@@ -214,24 +205,20 @@ export function useAuth() {
     }
   }, []);
 
-  // ── Google sign-in ────────────────────────────────────────
+  // ─── FIXED GOOGLE SIGN-IN ─────────────────────────────────
+  // No state updates (setError) before signInWithPopup.
+  // Error will be set after the popup attempt (inside catch).
   const signInGoogle = useCallback(async (): Promise<boolean> => {
     if (!isFirebaseConfigured || !auth) {
       setError('Firebase not configured — use the name-only option below');
       return false;
     }
-    setError(null);
 
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     provider.addScope('email');
     provider.addScope('profile');
 
-    // CRITICAL: signInWithPopup MUST be called synchronously from the
-    // user gesture (button click). Any await before this call breaks
-    // the browser gesture chain and the popup is silently blocked.
-    //
-    // On mobile we use redirect instead — popups are always blocked there.
     if (isMobile()) {
       try {
         console.log('[Auth] Mobile — using redirect');
@@ -244,7 +231,7 @@ export function useAuth() {
       }
     }
 
-    // Desktop: call popup immediately (no awaits before this line)
+    // Desktop: call popup immediately – NO setError BEFORE this.
     try {
       console.log('[Auth] Opening Google popup…');
       const result = await signInWithPopup(auth!, provider);
@@ -255,11 +242,11 @@ export function useAuth() {
 
       if (e.code === 'auth/popup-closed-by-user' ||
           e.code === 'auth/cancelled-popup-request') {
-        return false; // user dismissed — no error shown
+        return false; // user dismissed – no error shown
       }
 
       if (e.code === 'auth/popup-blocked') {
-        // Popup blocked — fall back to redirect
+        // Fallback to redirect
         try {
           await signInWithRedirect(auth!, provider);
           return true;
@@ -274,7 +261,6 @@ export function useAuth() {
     }
   }, []);
 
-  // ── Reset password ────────────────────────────────────────
   const resetPassword = useCallback(async (email: string): Promise<boolean> => {
     if (!isFirebaseConfigured || !auth) {
       setError('Firebase not configured');
@@ -290,7 +276,6 @@ export function useAuth() {
     }
   }, []);
 
-  // ── Logout ────────────────────────────────────────────────
   const logout = useCallback(async () => {
     if (isFirebaseConfigured && auth) await signOut(auth!).catch(() => {});
     removeGuestToken();
@@ -299,7 +284,6 @@ export function useAuth() {
     authHandledRef.current = false;
   }, [clearLocalUser]);
 
-  // ── Upgrade plan ──────────────────────────────────────────
   const upgradePlan = useCallback((plan: 'pro' | 'enterprise', expiresAt?: number) => {
     const daysMap = { pro: 30, enterprise: 365 };
     const expiry  = expiresAt ?? Date.now() + daysMap[plan] * 86400000;

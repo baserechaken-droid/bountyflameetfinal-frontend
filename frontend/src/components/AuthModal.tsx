@@ -72,7 +72,6 @@ export function AuthModal({
       if (mode === 'login') {
         if (!email || !pass) return;
         await onSignIn(email, pass);
-        // Modal stays open if sign-in fails — error shown by parent via error prop
       } else if (mode === 'register') {
         if (!name || !email || !pass) return;
         await onRegister(name, email, pass);
@@ -90,16 +89,19 @@ export function AuthModal({
     if (e.key === 'Enter') handleSubmit();
   };
 
-  // Google sign-in
-  // CRITICAL: Do NOT setGoogleLoading or clearError before calling onGoogle().
-  // Any state update before the popup call causes a React re-render which
-  // breaks the browser user-gesture chain — the popup is then blocked silently.
-  // Solution: call onGoogle() first, handle state in .finally()
+  // ─── FIXED GOOGLE HANDLER ─────────────────────────────────
+  // No state updates before calling onGoogle() – preserves user gesture.
+  // Loading state and error clearing happen after the popup is opened.
   const handleGoogle = () => {
     if (loading || googleLoading) return;
-    clearError();
+    // Do NOT call clearError() or setGoogleLoading(true) here.
+    onGoogle().finally(() => {
+      setGoogleLoading(false);
+      // Clear any leftover error after the attempt completes
+      clearError();
+    });
+    // Start loading indicator immediately (after the popup call – safe)
     setGoogleLoading(true);
-    onGoogle().finally(() => setGoogleLoading(false));
   };
 
   const inputCls = 'w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-flame-500/60 focus:ring-2 focus:ring-flame-500/20 transition-all';
