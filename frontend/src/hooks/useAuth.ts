@@ -122,7 +122,7 @@ export function useAuth() {
     // don't double-fire user setup.
     let unsubscribe: (() => void) | null = null;
 
-    getRedirectResult(auth)
+    getRedirectResult(auth!)
       .then(async result => {
         if (result?.user && !authHandledRef.current) {
           console.log('[Auth] ✅ Google redirect result:', result.user.email);
@@ -139,7 +139,7 @@ export function useAuth() {
       })
       .finally(() => {
         // Step 2: Set up persistent auth state listener
-        unsubscribe = onAuthStateChanged(auth, async fbUser => {
+        unsubscribe = onAuthStateChanged(auth!, async fbUser => {
           if (authHandledRef.current && fbUser) {
             // Already handled by redirect result above — skip but keep loading false
             setLoading(false);
@@ -185,7 +185,7 @@ export function useAuth() {
     }
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth!, email, password);
       console.log('[Auth] ✅ Email sign-in success');
       return true;
     } catch (e: any) {
@@ -203,7 +203,7 @@ export function useAuth() {
     }
     setError(null);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const cred = await createUserWithEmailAndPassword(auth!, email, password);
       await updateProfile(cred.user, { displayName: name });
       console.log('[Auth] ✅ Registration success:', email);
       return true;
@@ -231,7 +231,7 @@ export function useAuth() {
     if (isMobile()) {
       try {
         console.log('[Auth] Mobile detected — using redirect for Google sign-in');
-        await signInWithRedirect(auth, provider);
+        await signInWithRedirect(auth!, provider);
         return true;
       } catch (e: any) {
         console.error('[Auth] Redirect error:', e.code);
@@ -243,7 +243,7 @@ export function useAuth() {
     // Desktop: popup first, redirect as fallback
     try {
       console.log('[Auth] Opening Google sign-in popup…');
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth!, provider);
       console.log('[Auth] ✅ Google popup success:', result.user.email);
       return true;
     } catch (e: any) {
@@ -257,7 +257,7 @@ export function useAuth() {
       if (e.code === 'auth/popup-blocked') {
         console.log('[Auth] Popup blocked — trying redirect…');
         try {
-          await signInWithRedirect(auth, provider);
+          await signInWithRedirect(auth!, provider);
           return true;
         } catch (e2: any) {
           setError(friendlyError(e2.code));
@@ -278,7 +278,7 @@ export function useAuth() {
     }
     setError(null);
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth!, email);
       return true;
     } catch (e: any) {
       setError(friendlyError(e.code));
@@ -288,7 +288,7 @@ export function useAuth() {
 
   // ── Logout ────────────────────────────────────────────────
   const logout = useCallback(async () => {
-    if (isFirebaseConfigured && auth) await signOut(auth).catch(() => {});
+    if (isFirebaseConfigured && auth) await signOut(auth!).catch(() => {});
     removeGuestToken();
     clearLocalUser();
     setUser(null);
